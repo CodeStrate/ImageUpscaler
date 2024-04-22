@@ -125,16 +125,16 @@ def bicubic_interpolation(image, upscale_ratio, a):
 
 
 if __name__ == '__main__':
-    image = cv2.imread('examples\\Butterfly.jpg')
+    image = cv2.imread('examples\\butterfly.png')
     ratio = 2
     a = -1/2
 
     dst = bicubic_interpolation(image, ratio, a)
     print('Completed!')
 
-    cv2.imwrite('examples\\Butterfly_bicubic.jpg', dst)
+    cv2.imwrite('examples\\butterfly_bicubic.png', dst)
 
-    bicubic_image = cv2.imread('examples\\Butterfly_bicubic.jpg')
+    bicubic_image = cv2.imread('examples\\butterfly_bicubic.png')
 
     print('Original Image shape : ', image.shape)
     print('Bicubic Generated Image shape : ', bicubic_image.shape)

@@ -130,8 +130,6 @@ env.bak/
 venv.bak/
 image_upscaler/
 
-#my_file
-examples/my_test.jpg
 
 # Spyder project settings
 .spyderproject

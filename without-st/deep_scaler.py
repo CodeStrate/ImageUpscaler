@@ -35,7 +35,7 @@ end_time = time.time()
 print('[INFO] the SR Model took {:.6f} seconds'.format(end_time - start_time))
 print('[INFO] Width: {}, Height: {}'.format(upscaled_image.shape[1], upscaled_image.shape[0]))
 
-cv2.imwrite(f'examples\\{model_name}_result.png', upscaled_image)
+cv2.imwrite(f'examples\\{model_name}_result.jpg', upscaled_image)
 
 cv2.imshow("Original : ", image)
 cv2.imshow("SR : ", upscaled_image)
