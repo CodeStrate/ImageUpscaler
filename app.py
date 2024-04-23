@@ -134,6 +134,9 @@ with deep_scaling:
     selected_model_index = models[selected_model]['scales'].index(selected_upscale_ratio)
     selected_model_path = models[selected_model]['paths'][selected_model_index]
 
+    if selected_model:
+        st.info(f'{models_info[selected_model]}')
+        
     # st.write(selected_model_index, selected_model_path)
     if st.button('Deep Upscale'):
 
@@ -152,8 +155,6 @@ with deep_scaling:
 
         st.image(upscaled_image, caption=f'Upscaled using {selected_model}')
 
-    if selected_model:
-        st.info(f'{models_info[selected_model]}')
 
     
 
