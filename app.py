@@ -74,16 +74,19 @@ def upscale_my_bicubic(image, ratio):
 def load_models_and_get_scales():
     models_dir = 'models'
     models = {}
-    scales = set()
     for filename in os.listdir(models_dir):
         if filename.endswith(".pb"):
             model_path = os.path.join(models_dir, filename)
             model_name = filename.split('.')[0]
+            prefix = model_name.split('_')[0]
             scale_str = model_name.split('_')[-1]
             scale = int(scale_str.replace('x', ''))
-            models[model_name] = model_path
-            scales.add(scale)
-    return models, sorted(list(scales))
+            if prefix not in models:
+                models[prefix] = {'paths': [model_path], 'scales': [scale]}
+            else:
+                models[prefix]['paths'].append(model_path)
+                models[prefix]['scales'].append(scale)
+    return models
 # traditional upscaler
 
 with traditional:
@@ -116,9 +119,43 @@ with traditional:
 
 
 with deep_scaling:
-    models, scales = load_models_and_get_scales()
-    st.write(models)
-    st.write(scales)
+    models_info = {
+        "EDSR" : "Enhanced Deep Residual Networks for Single Image",
+        "ESPCN" : "Efficient Sub-Pixel Convolutional Neural Network for Real Time Single Image/Video",
+        "FSRCNN" : "Accelerated Super-Resolution Convolutional Neural Network",
+        "LapSRN" : "Fast and Accurate Image Super-Resolution with Deep Laplacian Pyramid Networks",
+    }
+
+    models = load_models_and_get_scales()
+    # st.write(models)
+    selected_model = st.selectbox('Select your Deep Upscaling Model', options=list(models.keys()))
+    selected_upscale_ratio = st.selectbox('Select Upscaling Ratio', options=list(models[selected_model]['scales']))
+
+    selected_model_index = models[selected_model]['scales'].index(selected_upscale_ratio)
+    selected_model_path = models[selected_model]['paths'][selected_model_index]
+
+    # st.write(selected_model_index, selected_model_path)
+    if st.button('Deep Upscale'):
+
+        sr_object = cv2.dnn_superres.DnnSuperResImpl_create()
+        sr_object.readModel(selected_model_path)
+        sr_object.setModel(selected_model.lower(), selected_upscale_ratio)
+
+        img = Image.open(upload_util)
+        img = np.array(img)
+
+        start_time = time.time()
+        upscaled_image = sr_object.upsample(img)
+        end_time = time.time()
+
+        st.success('The Model took {:.6f} seconds'.format(end_time - start_time))
+
+        st.image(upscaled_image, caption=f'Upscaled using {selected_model}')
+
+    if selected_model:
+        st.info(f'{models_info[selected_model]}')
+
+    
 
 # about me
 
