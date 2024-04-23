@@ -41,7 +41,7 @@ def padding(image, H, W, C): # image is the input image , H is height, W is widt
 
 
 def progress_bar(progress):
-    END = 170
+
     MAX_LENGTH = 30
     BAR_LENGTH = int(MAX_LENGTH * progress)
 
