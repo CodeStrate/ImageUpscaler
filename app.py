@@ -50,8 +50,6 @@ if upload_util is None:
 
 st.markdown("`Image Loaded : {}`".format(upload_util.name))
 
-input_image = upload_util.name
-
 extension_used = upload_util.name.split(".")[-1]
 
 # st.write(extension_used) working
@@ -60,15 +58,41 @@ extension_used = upload_util.name.split(".")[-1]
 traditional, deep_scaling, about_me = st.tabs(['Use Traditional Upscaling 🔢', 'Use Deep Scaler 📐', 'About Me 😶‍🌫️'])
 
 
-def upscale_my_bicubic(image, ratio):
+def upscale_bicubic(method, ratio):
     with st.spinner("Upscaling...PLEASE WAIT!"):
+        img = Image.open(upload_util)
+        img = np.array(img)
+        if method == 'Fast':
+            new_width = int(img.shape[1] * ratio)
+            new_height = int(img.shape[0] * ratio)
 
-        dst = bicubic_interpolation(image, ratio, -1/2)
-        dst_normalized = np.clip(dst, 0, 255).astype(np.uint8)
-        st.success("Operation Completed! 🎊")
+            bicubic = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            st.success("Operation Completed! 🎊")
+        else:
+            start_time = time.time()
+            dst = bicubic_interpolation(img, ratio, -1/2)
+            end_time = time.time()
+            bicubic = np.clip(dst, 0, 255).astype(np.uint8)
+            st.success("Operation Completed! Took {:.4f} seconds 🎊".format(end_time - start_time))
 
-        return dst_normalized
+        return bicubic
 
+def deep_upscaler(path, model, ratio):
+    with st.spinner('Deep Upscaling...PLEASE WAIT!'):
+        sr_object = cv2.dnn_superres.DnnSuperResImpl_create()
+        sr_object.readModel(path)
+        sr_object.setModel(model, ratio)
+
+        img = Image.open(upload_util)
+        img = np.array(img)
+
+        start_time = time.time()
+        upscaled_image = sr_object.upsample(img)
+        end_time = time.time()
+
+        st.success('The Model took {:.4f} seconds 🎊'.format(end_time - start_time))
+
+        return upscaled_image
 
 
 def load_models_and_get_scales():
@@ -98,23 +122,11 @@ with traditional:
         st.info('Custom Bicubic is based on my own implementation of Bicubic Interpolation')
 
     if st.button('Upscale Image'):
-        if select_type == 'Fast':
 
-            img = Image.open(upload_util)
-            img = np.array(img)
-            new_width = int(img.shape[1] * upscale_ratio)
-            new_height = int(img.shape[0] * upscale_ratio)
-
-            bicubic = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-
-            st.image(bicubic, caption='Resultant Image')
-        else:
-            img = Image.open(upload_util)
-            img = np.array(img)
-
-            bicubic = upscale_my_bicubic(img, upscale_ratio)
-
-            st.image(bicubic, caption='Resized using My Bicubic.')
+        bicubic = upscale_bicubic(select_type, upscale_ratio)
+        st.image(bicubic, caption='Resized using Bicubic.')
+        st.markdown('---')
+        
 
 
 
@@ -140,22 +152,9 @@ with deep_scaling:
     # st.write(selected_model_index, selected_model_path)
     if st.button('Deep Upscale'):
 
-        sr_object = cv2.dnn_superres.DnnSuperResImpl_create()
-        sr_object.readModel(selected_model_path)
-        sr_object.setModel(selected_model.lower(), selected_upscale_ratio)
-
-        img = Image.open(upload_util)
-        img = np.array(img)
-
-        start_time = time.time()
-        upscaled_image = sr_object.upsample(img)
-        end_time = time.time()
-
-        st.success('The Model took {:.6f} seconds'.format(end_time - start_time))
-
+        upscaled_image = deep_upscaler(selected_model_path, selected_model.lower(), selected_upscale_ratio)
         st.image(upscaled_image, caption=f'Upscaled using {selected_model}')
-
-
+        st.markdown('---')
     
 
 # about me
