@@ -64,6 +64,9 @@ traditional, deep_scaling, sharpen, about_me = st.tabs(['Use Traditional Upscali
 #         img = Image.open(image)
 #         img = np.
 
+
+#added download option
+
 def download_image(image):
     pillow_image = Image.fromarray(image)
     buffered = BytesIO()
