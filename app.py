@@ -3,6 +3,8 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 
+from io import BytesIO
+
 import time, os
 
 from st_bicubic import bicubic_interpolation
@@ -45,7 +47,7 @@ with st.sidebar.popover("Deep Upscaling"):
     st.write("1. EDSR\n 2. ESPCN\n 3. FSRCNN\n 4. LapSRN\n")
 
 if upload_util is None:
-    st.info("Load an image to upscale...⬆️")
+    st.info("Load an image to upscale...⬆️ `(Currently only JPG/PNG)`")
     st.stop()
 
 st.markdown("`Image Loaded : {}`".format(upload_util.name))
@@ -55,8 +57,19 @@ extension_used = upload_util.name.split(".")[-1]
 # st.write(extension_used) working
 
 # tabs
-traditional, deep_scaling, about_me = st.tabs(['Use Traditional Upscaling 🔢', 'Use Deep Scaler 📐', 'About Me 😶‍🌫️'])
+traditional, deep_scaling, sharpen, about_me = st.tabs(['Use Traditional Upscaling 🔢', 'Use Deep Scaler 📐', 'Sharpen Image (Gaussian) 🫨', 'About Me 😶‍🌫️'])
 
+# def sharpen_image(image):
+#     with st.spinner('Sharpening your Image ... PLEASE WAIT!'):
+#         img = Image.open(image)
+#         img = np.
+
+def download_image(image):
+    pillow_image = Image.fromarray(image)
+    buffered = BytesIO()
+    pillow_image.save(buffered, format="PNG")
+    
+    return buffered.getvalue()
 
 def upscale_bicubic(method, ratio):
     with st.spinner("Upscaling...PLEASE WAIT!"):
@@ -125,7 +138,11 @@ with traditional:
 
         bicubic = upscale_bicubic(select_type, upscale_ratio)
         st.image(bicubic, caption='Resized using Bicubic.')
-        st.markdown('---')
+        if bicubic is not None:
+            downloadable_image = download_image(bicubic)
+            filename = upload_util.name.split('.')[0]
+            st.markdown('---')
+            st.download_button('Download as PNG', downloadable_image, file_name=f'Deep_{filename}.png', mime='image/png')
         
 
 
@@ -154,7 +171,13 @@ with deep_scaling:
 
         upscaled_image = deep_upscaler(selected_model_path, selected_model.lower(), selected_upscale_ratio)
         st.image(upscaled_image, caption=f'Upscaled using {selected_model}')
-        st.markdown('---')
+
+        if upscaled_image is not None:
+            downloadable_image = download_image(upscaled_image)
+            filename = upload_util.name.split('.')[0]
+            st.markdown('---')
+            st.download_button('Download as PNG', downloadable_image, file_name=f'Deep_{filename}.png', mime='image/png')
+
     
 
 # about me
