@@ -61,12 +61,11 @@ extension_used = upload_util.name.split(".")[-1]
 # tabs
 traditional, deep_scaling, sharpen, about_me = st.tabs(['Use Traditional Upscaling 🔢', 'Use Deep Scaler 📐', 'Sharpen Image (Gaussian) 🫨', 'About Me 😶‍🌫️'])
 
-def sharpen_image(image):
+def sharpen_image(image,sigma, amount):
     with st.spinner('Sharpening your Image ... PLEASE WAIT!'):
 
         # Gaussian kernel
         kernel_size = (5, 5)
-        sigma = 1.0
         kernel = np.fromfunction(
             lambda x, y: (1/(2*np.pi*sigma**2)) * np.exp(-((x-(kernel_size[0]-1)/2)**2 + (y-(kernel_size[1]-1)/2)**2) / (2*sigma**2)),
         kernel_size
@@ -77,7 +76,9 @@ def sharpen_image(image):
 
         img = np.array(img)
 
-        unsharp_masked = unsharp_mask(img, kernel=kernel, kernel_size=kernel_size, sigma=sigma)
+        unsharp_masked = unsharp_mask(img, kernel, kernel_size, amount)
+
+        st.success(f"Image Sharpened by {amount}x 🎊")
 
         return unsharp_masked
 
@@ -213,9 +214,11 @@ with deep_scaling:
 
 with sharpen:
     st.info('Made using Unsharp Mask Algorithm : mask = original_image + amount * (original - blurred)')
+    sigma_value = st.slider('Sigma', min_value=0.5, max_value=4.0, step=0.1, format="%.1f")
+    amount_sharpen = st.slider('Sharpen Amount', min_value=0.5, max_value=5.0, step=0.1, format="%.1f")
     if st.button("Sharpen the Image"):
-        resultant = sharpen_image(upload_util)
-        st.image(resultant, caption="Sharpened using Unsharp Masking (S=1)")
+        resultant = sharpen_image(upload_util, sigma_value, amount_sharpen)
+        st.image(resultant, caption="Sharpened using Unsharp Masking")
         if resultant is not None:
             downloadable_image = download_image(resultant)
             filename = upload_util.name.split('.')[0]

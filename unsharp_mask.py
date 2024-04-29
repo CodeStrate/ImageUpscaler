@@ -1,8 +1,6 @@
-# mask = original_image + amount * (original - blurred)
-
 import numpy as np
 
-def unsharp_mask(image, kernel, kernel_size=(5, 5), sigma=1.0, amount=1.5):
+def unsharp_mask(image, kernel, kernel_size=(5, 5), amount=1.5):
     # Convert the image to float32
     image_float = image.astype(np.float32)
 

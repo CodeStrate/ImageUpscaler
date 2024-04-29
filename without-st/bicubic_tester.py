@@ -103,7 +103,7 @@ def bicubic_interpolation(image, upscale_ratio, a):
         for j in range(dH):
             for i in range(dW):
                 with lock:
-                    dest_image[j, i, c] = results[progress][0]  # Access the first element of the result array
+                    dest_image[j, i, c] = results[progress][0]
                 progress += 1
 
     return dest_image
