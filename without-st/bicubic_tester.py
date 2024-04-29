@@ -2,6 +2,7 @@ import numpy as np
 import math
 from joblib import Parallel, delayed
 from tqdm import tqdm
+from PIL import Image
 from multiprocessing import Lock
 
 # Define a lock for synchronization
@@ -106,3 +107,16 @@ def bicubic_interpolation(image, upscale_ratio, a):
                 progress += 1
 
     return dest_image
+# Example usage
+input_image = Image.open('examples\\seagull.jpg')
+
+image = np.array(input_image)
+
+# Define upscale ratio and interpolation parameter 'a'
+upscale_ratio = 2
+a = -0.5
+
+# Perform bicubic interpolation
+result_image = bicubic_interpolation(image, upscale_ratio, a)
+result_image_pil = Image.fromarray(result_image.astype(np.uint8))
+result_image_pil.save('test.png')

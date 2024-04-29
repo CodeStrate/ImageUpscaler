@@ -9,6 +9,8 @@ import time, os
 
 from st_bicubic import bicubic_interpolation
 
+from unsharp_mask import unsharp_mask
+
 st.set_page_config(
     page_title="Deep.Imager",
     page_icon="💻",
@@ -41,7 +43,7 @@ with st.sidebar:
     st.markdown("---")
 
 with st.sidebar.popover("Traditional Upscaling"):
-    st.write("1. Fast Bicubic\n 2. Custom Bicubic (My implementation)\n")
+    st.write("1. Fast Bicubic\n 2. Custom Bicubic (My implementation)\n 3. Fast Lanczos\n")
 
 with st.sidebar.popover("Deep Upscaling"):
     st.write("1. EDSR\n 2. ESPCN\n 3. FSRCNN\n 4. LapSRN\n")
@@ -59,11 +61,25 @@ extension_used = upload_util.name.split(".")[-1]
 # tabs
 traditional, deep_scaling, sharpen, about_me = st.tabs(['Use Traditional Upscaling 🔢', 'Use Deep Scaler 📐', 'Sharpen Image (Gaussian) 🫨', 'About Me 😶‍🌫️'])
 
-# def sharpen_image(image):
-#     with st.spinner('Sharpening your Image ... PLEASE WAIT!'):
-#         img = Image.open(image)
-#         img = np.
+def sharpen_image(image):
+    with st.spinner('Sharpening your Image ... PLEASE WAIT!'):
 
+        # Gaussian kernel
+        kernel_size = (5, 5)
+        sigma = 1.0
+        kernel = np.fromfunction(
+            lambda x, y: (1/(2*np.pi*sigma**2)) * np.exp(-((x-(kernel_size[0]-1)/2)**2 + (y-(kernel_size[1]-1)/2)**2) / (2*sigma**2)),
+        kernel_size
+                )
+        kernel = kernel / np.sum(kernel)
+
+        img = Image.open(image)
+
+        img = np.array(img)
+
+        unsharp_masked = unsharp_mask(img, kernel=kernel, kernel_size=kernel_size, sigma=sigma)
+
+        return unsharp_masked
 
 #added download option
 
@@ -74,24 +90,31 @@ def download_image(image):
     
     return buffered.getvalue()
 
-def upscale_bicubic(method, ratio):
+def upscale_traditional(method, ratio):
     with st.spinner("Upscaling...PLEASE WAIT!"):
         img = Image.open(upload_util)
-        img = np.array(img)
-        if method == 'Fast':
+        if method == 'Fast Bicubic':
+            img = np.array(img)
             new_width = int(img.shape[1] * ratio)
             new_height = int(img.shape[0] * ratio)
 
-            bicubic = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            result = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            st.success("Operation Completed! 🎊")
+        elif method == 'Fast Lanczos':
+            new_width, new_height = int(img.width * ratio), int(img.height * ratio)
+
+            result = img.resize((new_width, new_height), Image.LANCZOS)
+            result = np.array(result)
             st.success("Operation Completed! 🎊")
         else:
+            img = np.array(img)
             start_time = time.time()
             dst = bicubic_interpolation(img, ratio, -1/2)
             end_time = time.time()
-            bicubic = np.clip(dst, 0, 255).astype(np.uint8)
+            result = np.clip(dst, 0, 255).astype(np.uint8)
             st.success("Operation Completed! Took {:.4f} seconds 🎊".format(end_time - start_time))
 
-        return bicubic
+        return result
 
 def deep_upscaler(path, model, ratio):
     with st.spinner('Deep Upscaling...PLEASE WAIT!'):
@@ -127,22 +150,28 @@ def load_models_and_get_scales():
                 models[prefix]['paths'].append(model_path)
                 models[prefix]['scales'].append(scale)
     return models
+
 # traditional upscaler
 
 with traditional:
-    select_type = st.selectbox('Select upscaling Method', options=('Fast', 'Custom'))
+    select_type = st.selectbox('Select upscaling Method', options=('Fast Bicubic', 'Custom Bicubic', 'Fast Lanczos'))
     upscale_ratio = st.slider('Select Upscaling Ratio (Eg. 2x, 3x, 0.5x, etc.)', min_value=0.5, max_value=4.0, step=0.1, format="%.1f")
-    if select_type == 'Fast':
-        st.info('Fast Bicubic is based on OpenCV2 resize function with interpolation')
-    else:
-        st.info('Custom Bicubic is based on my own implementation of Bicubic Interpolation')
+
+    method_info = {
+        "Fast Bicubic" : "Fast Bicubic is based on OpenCV2 resize function with interpolation",
+        "Custom Bicubic" : "Custom Bicubic is based on my own implementation of Bicubic Interpolation",
+        "Fast Lanczos" : "Lanczos Interpolation based on Pillow module"
+    }
+
+    if select_type:
+        st.info(f'{method_info[select_type]}')
 
     if st.button('Upscale Image'):
 
-        bicubic = upscale_bicubic(select_type, upscale_ratio)
-        st.image(bicubic, caption='Resized using Bicubic.')
-        if bicubic is not None:
-            downloadable_image = download_image(bicubic)
+        upscaled_tr = upscale_traditional(select_type, upscale_ratio)
+        st.image(upscaled_tr, caption=f'Resized using {select_type}.')
+        if upscaled_tr is not None:
+            downloadable_image = download_image(upscaled_tr)
             filename = upload_util.name.split('.')[0]
             st.markdown('---')
             st.download_button('Download as PNG', downloadable_image, file_name=f'Deep_{filename}.png', mime='image/png')
@@ -177,6 +206,18 @@ with deep_scaling:
 
         if upscaled_image is not None:
             downloadable_image = download_image(upscaled_image)
+            filename = upload_util.name.split('.')[0]
+            st.markdown('---')
+            st.download_button('Download as PNG', downloadable_image, file_name=f'Deep_{filename}.png', mime='image/png')
+
+
+with sharpen:
+    st.info('Made using Unsharp Mask Algorithm : mask = original_image + amount * (original - blurred)')
+    if st.button("Sharpen the Image"):
+        resultant = sharpen_image(upload_util)
+        st.image(resultant, caption="Sharpened using Unsharp Masking (S=1)")
+        if resultant is not None:
+            downloadable_image = download_image(resultant)
             filename = upload_util.name.split('.')[0]
             st.markdown('---')
             st.download_button('Download as PNG', downloadable_image, file_name=f'Deep_{filename}.png', mime='image/png')

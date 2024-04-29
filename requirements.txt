@@ -3,3 +3,6 @@ pandas
 opencv-contrib-python
 streamlit
 pillow
+scipy
+joblib
+scikit-image

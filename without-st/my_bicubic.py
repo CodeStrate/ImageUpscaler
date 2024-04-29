@@ -1,4 +1,6 @@
-import cv2, time, sys, math, numpy as np
+import sys, math, numpy as np
+import time
+from PIL import Image
 
 # MY IMPLEMENTATION FOR BICUBIC INTERPOLATION FOR IMAGES.
 
@@ -49,6 +51,7 @@ def progress_bar(progress):
             + ' ' * (MAX_LENGTH - BAR_LENGTH) + '] %.1f%%' % (progress * 100.))
 
 def bicubic_interpolation(image, upscale_ratio, a):
+    image = np.array(image)
     # image size
     H, W, C = image.shape
 
@@ -125,16 +128,13 @@ def bicubic_interpolation(image, upscale_ratio, a):
 
 
 if __name__ == '__main__':
-    image = cv2.imread('examples\\butterfly.png')
+    image = Image.open('examples\\bf_alt.png')
     ratio = 2
     a = -1/2
-
-    dst = bicubic_interpolation(image, ratio, a)
-    print('Completed!')
-
-    cv2.imwrite('examples\\butterfly_bicubic.png', dst)
-
-    bicubic_image = cv2.imread('examples\\butterfly_bicubic.png')
-
-    print('Original Image shape : ', image.shape)
-    print('Bicubic Generated Image shape : ', bicubic_image.shape)
+    start_time = time.time()
+    dst = bicubic_interpolation(image, ratio, -1/2)
+    end_time = time.time()
+    result = np.clip(dst, 0, 255).astype(np.uint8)
+    print("Operation Completed! Took {:.4f} seconds 🎊".format(end_time - start_time))
+    result = Image.fromarray(dst)
+    result.show()
