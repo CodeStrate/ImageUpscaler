@@ -66,17 +66,20 @@ def sharpen_image(image,sigma, amount):
 
         # Gaussian kernel
         kernel_size = (5, 5)
-        kernel = np.fromfunction(
-            lambda x, y: (1/(2*np.pi*sigma**2)) * np.exp(-((x-(kernel_size[0]-1)/2)**2 + (y-(kernel_size[1]-1)/2)**2) / (2*sigma**2)),
-        kernel_size
-                )
-        kernel = kernel / np.sum(kernel)
+        sigma = 1.0
+
+# Create the Gaussian kernel
+        x = np.arange(-(kernel_size[0] - 1) / 2, (kernel_size[0] - 1) / 2 + 1)
+        y = np.arange(-(kernel_size[1] - 1) / 2, (kernel_size[1] - 1) / 2 + 1)
+        xx, yy = np.meshgrid(x, y)
+        kernel = np.exp(-(xx**2 + yy**2) / (2.0 * sigma**2))
+        kernel = kernel / np.sum(kernel)  # Normalize the kernel to sum up to 1
 
         img = Image.open(image)
 
         img = np.array(img)
 
-        unsharp_masked = unsharp_mask(img, kernel, kernel_size, amount)
+        unsharp_masked = unsharp_mask(img, kernel, amount)
 
         st.success(f"Image Sharpened by {amount}x 🎊")
 
