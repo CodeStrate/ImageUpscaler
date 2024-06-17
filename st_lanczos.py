@@ -3,6 +3,7 @@ import math
 from joblib import Parallel, delayed
 from multiprocessing import Lock
 from tqdm import tqdm
+# from PIL import Image
 
 lock = Lock()
 
@@ -55,3 +56,22 @@ def lanczos_interpolation(image, upscale_ratio):
     progress_bar.close()
 
     return dest_image
+
+# Testing 
+
+
+# # Load the input image
+# input_image = Image.open('examples\\bf_alt.png')
+# image = np.array(input_image)
+
+# # Define upscale ratio
+# upscale_ratio = 2
+
+# # Perform Lanczos interpolation
+# result_image = lanczos_interpolation(image, upscale_ratio)
+
+# # Convert the interpolated image array back to PIL Image format
+# result_image_pil = Image.fromarray(result_image.astype(np.uint8))
+
+# # Display the interpolated image
+# result_image_pil.show()

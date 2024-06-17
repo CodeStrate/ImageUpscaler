@@ -8,7 +8,7 @@ from io import BytesIO
 import time, os
 
 from st_bicubic import bicubic_interpolation
-
+from st_lanczos import lanczos_interpolation
 from unsharp_mask import unsharp_mask
 
 st.set_page_config(
@@ -110,6 +110,13 @@ def upscale_traditional(method, ratio):
             result = img.resize((new_width, new_height), Image.LANCZOS)
             result = np.array(result)
             st.success("Operation Completed! 🎊")
+        elif method == 'Custom Lanczos':
+            img = np.array(img)
+            start_time = time.time()
+            dst = lanczos_interpolation(img, ratio)
+            end_time = time.time()
+            result = np.clip(dst, 0, 255).astype(np.uint8)
+            st.success("Operation Completed! Took {:.4f} seconds 🎊".format(end_time - start_time))
         else:
             img = np.array(img)
             start_time = time.time()
@@ -158,13 +165,14 @@ def load_models_and_get_scales():
 # traditional upscaler
 
 with traditional:
-    select_type = st.selectbox('Select upscaling Method', options=('Fast Bicubic', 'Custom Bicubic', 'Fast Lanczos'))
+    select_type = st.selectbox('Select upscaling Method', options=('Fast Bicubic', 'Custom Bicubic', 'Fast Lanczos', 'Custom Lanczos'))
     upscale_ratio = st.slider('Select Upscaling Ratio (Eg. 2x, 3x, 0.5x, etc.)', min_value=0.5, max_value=4.0, step=0.1, format="%.1f")
 
     method_info = {
         "Fast Bicubic" : "Fast Bicubic is based on OpenCV2 resize function with interpolation",
         "Custom Bicubic" : "Custom Bicubic is based on my own implementation of Bicubic Interpolation",
-        "Fast Lanczos" : "Lanczos Interpolation based on Pillow module"
+        "Fast Lanczos" : "Lanczos Interpolation based on Pillow module",
+        "Custom Lanczos" : "My own Lanczos Resampler based on combining the Lanczos Kernel with the Bicubic Method I used"
     }
 
     if select_type:
