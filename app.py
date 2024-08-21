@@ -129,7 +129,7 @@ def upscale_traditional(method, ratio):
 
 def deep_upscaler(path, model, ratio):
     with st.spinner('Deep Upscaling...PLEASE WAIT!'):
-        sr_object = cv2.dnn_superres.DnnSuperResImpl.create()
+        sr_object = cv2.dnn_superres.DnnSuperResImpl_create()
         sr_object.readModel(path)
         sr_object.setModel(model, ratio)
 
