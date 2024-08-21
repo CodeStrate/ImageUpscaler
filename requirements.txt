@@ -1,7 +1,6 @@
 numpy<2
 pandas
 opencv-contrib-python
-opencv-python-headless
 streamlit
 pillow
 scipy
